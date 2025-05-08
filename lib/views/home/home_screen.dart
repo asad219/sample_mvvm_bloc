@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sample_mvvm_bloc/bloc/movies/bloc/movies_bloc.dart';
 import 'package:sample_mvvm_bloc/config/routes/routes_name.dart';
+import 'package:sample_mvvm_bloc/services/get_it/init_getit.dart';
 import 'package:sample_mvvm_bloc/services/storage/local_storage.dart';
+import 'package:sample_mvvm_bloc/utils/enums.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,6 +14,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late MoviesBloc moviesBloc;
+  @override
+  void initState() {
+    super.initState();
+    moviesBloc = MoviesBloc(moviesRepository: getIt());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,20 +48,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Home Screen'),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Go Back'),
-            ),
-          ],
-        ),
-      ),
+      body: BlocProvider(
+          create: (_) => moviesBloc,
+          child: BlocBuilder<MoviesBloc, MoviesState>(
+              builder: (BuildContext context, state) {
+            switch (state.moviesList.status) {
+              case Status.loading:
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+
+              case Status.completed:
+                // TODO: Handle this case.
+                return Text("Done");
+              case Status.error:
+                // TODO: Handle this case.
+                return Center(
+                  child: Text(state.moviesList.message.toString()),
+                );
+              case null:
+                // TODO: Handle this case.
+                throw UnimplementedError();
+            }
+          })),
     );
   }
 }
